@@ -2,6 +2,8 @@ extern crate epub;
 extern crate mdbook;
 extern crate mdbook_epub;
 extern crate tempdir;
+#[macro_use]
+extern crate log;
 
 use epub::doc::EpubDoc;
 use std::path::Path;
@@ -9,12 +11,18 @@ use std::process::Command;
 use tempdir::TempDir;
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
+use mdbook::preprocess::{Preprocessor, LinkPreprocessor};
 use mdbook_epub::Error;
+use anyhow::Result;
 
 /// Convenience function for compiling the dummy book into an `EpubDoc`.
 fn generate_epub() -> Result<EpubDoc, Error> {
     let (ctx, _md, temp) = create_dummy_book().unwrap();
-    mdbook_epub::generate(&ctx)?;
+    let mut preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
+    let link_proc = LinkPreprocessor::new();
+    preprocessors.push(Box::new(link_proc));
+
+    mdbook_epub::generate(&ctx, preprocessors).expect("Generate Error");
     let output_file = mdbook_epub::output_filename(temp.path(), &ctx.config);
 
     let output_file = output_file.display().to_string();
@@ -27,15 +35,19 @@ fn output_epub_exists() {
 
     let output_file = mdbook_epub::output_filename(temp.path(), &ctx.config);
 
+    let preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
+
     assert!(!output_file.exists());
-    mdbook_epub::generate(&ctx).unwrap();
+    mdbook_epub::generate(&ctx, preprocessors).unwrap();
     assert!(output_file.exists());
 }
 
 #[test]
 fn output_epub_is_valid() {
     let (ctx, _md, temp) = create_dummy_book().unwrap();
-    mdbook_epub::generate(&ctx).unwrap();
+    let preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
+
+    mdbook_epub::generate(&ctx, preprocessors).unwrap();
 
     let output_file = mdbook_epub::output_filename(temp.path(), &ctx.config);
 
@@ -72,10 +84,10 @@ fn look_for_chapter_1_heading() {
     let path = Path::new("OEBPS").join("chapter_1.html");
     let path = path.display().to_string();
     let content = doc.get_resource_str_by_path(path).unwrap();
-
+    debug!("{}", content);
     assert!(content.contains("<h1>Chapter 1</h1>"));
-    // assert!(!content.contains("{{#rustdoc_include")); // prepare fix link error
-    // assert!(content.contains("fn main() {")); // prepare fix link error
+    assert!(!content.contains("{{#rustdoc_include")); // should not be present
+    assert!(content.contains("loop {")); // should be present by replacement
 }
 
 #[test]

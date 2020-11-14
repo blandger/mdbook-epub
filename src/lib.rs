@@ -27,6 +27,7 @@ mod resources;
 
 pub use crate::config::Config;
 pub use crate::generator::Generator;
+use mdbook::preprocess::Preprocessor;
 
 /// The default stylesheet used to make the rendered document pretty.
 pub const DEFAULT_CSS: &str = include_str!("master.css");
@@ -104,12 +105,12 @@ fn version_check(ctx: &RenderContext) -> Result<(), Error> {
 }
 
 /// Generate an `EPUB` version of the provided book.
-pub fn generate(ctx: &RenderContext) -> Result<(), Error> {
+pub fn generate(ctx: &RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) -> Result<(), Error> {
     info!("Starting the EPUB generator");
     version_check(ctx)?;
 
     let outfile = output_filename(&ctx.destination, &ctx.config);
-    trace!("Output File: {}", outfile.display());
+    debug!("Output File: {}", outfile.display());
 
     if !ctx.destination.exists() {
         debug!(
@@ -120,7 +121,7 @@ pub fn generate(ctx: &RenderContext) -> Result<(), Error> {
     }
 
     let f = File::create(&outfile)?;
-    Generator::new(ctx)?.generate(f)?;
+    Generator::new(ctx, preprocessors)?.generate(f)?;
 
     Ok(())
 }

@@ -1,20 +1,21 @@
-use std::{iter,
-          io::{Read, Write},
-          fmt::{self, Debug, Formatter},
+use std::{fmt::{self, Debug, Formatter},
           fs::File,
-          path::PathBuf
+          io::{Read, Write},
+          iter,
+          path::{PathBuf},
 };
-
-use mdbook::renderer::RenderContext;
-use mdbook::book::{BookItem, Chapter};
 use epub_builder::{EpubBuilder, EpubContent, ZipLibrary};
-use super::Error;
-use pulldown_cmark::{html, Parser};
 use handlebars::{Handlebars, RenderError};
+use mdbook::book::{BookItem, Chapter};
+use mdbook::preprocess::{PreprocessorContext, Preprocessor};
+use mdbook::renderer::{RenderContext};
+use pulldown_cmark::{ Options, html, Parser };
 
 use crate::config::Config;
-use crate::resources::{self, Asset};
 use crate::DEFAULT_CSS;
+use crate::resources::{self, Asset};
+
+use super::Error;
 
 /// The actual EPUB book renderer.
 pub struct Generator<'a> {
@@ -22,10 +23,12 @@ pub struct Generator<'a> {
     builder: EpubBuilder<ZipLibrary>,
     config: Config,
     hbs: Handlebars<'a>,
+    preprocess_ctx: PreprocessorContext,
+    preprocessors: Vec<Box<dyn Preprocessor>>,
 }
 
 impl<'a> Generator<'a> {
-    pub fn new(ctx: &'a RenderContext) -> Result<Generator<'a>, Error> {
+    pub fn new(ctx: &'a RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) -> Result<Generator<'a>, Error> {
         let builder = EpubBuilder::new(ZipLibrary::new()?)?;
         let config = Config::from_render_context(ctx)?;
 
@@ -33,11 +36,19 @@ impl<'a> Generator<'a> {
         hbs.register_template_string("index", config.template()?)
             .map_err(|_| Error::TemplateParse)?;
 
+        let preprocess_ctx = PreprocessorContext::new(
+            ctx.root.clone(),
+            ctx.config.clone(),
+            "epub-builder".to_string(), // renderer.name().to_string()
+        );
+
         Ok(Generator {
             builder,
             ctx,
             config,
             hbs,
+            preprocess_ctx,
+            preprocessors,
         })
     }
 
@@ -85,7 +96,7 @@ impl<'a> Generator<'a> {
         debug!("Rendering Chapters");
 
         for item in &self.ctx.book.sections {
-            if let BookItem::Chapter(ref ch) = *item {
+            if let BookItem::Chapter(ch) = &mut item.clone() {
                 trace!("Adding chapter \"{}\"", ch);
                 self.add_chapter(ch)?;
             }
@@ -94,23 +105,31 @@ impl<'a> Generator<'a> {
         Ok(())
     }
 
-    fn add_chapter(&mut self, ch: &Chapter) -> Result<(), Error> {
-        let rendered = self.render_chapter(ch)?;
+    fn add_chapter(&mut self, ch: &mut Chapter) -> Result<(), Error> {
+        for renderer in &self.preprocessors {
+            renderer.preprocess_chapter(&self.preprocess_ctx, ch)?;
+        }
+        trace!("{}", &ch.content);
+        let rendered = self.render_chapter(&ch)?;
 
-        let content_path = ch.path.as_ref()
-            .ok_or_else(|| Error::ContentFileNotFound(format!("Content file was not found for Chapter {}", ch.name)))?;
-        trace!("add a chapter {:?} by a path = {:?}", &ch.name, content_path);
-        let path = content_path.with_extension("html").display().to_string();
-        let mut content = EpubContent::new(path, rendered.as_bytes()).title(format!("{}", ch));
+        // let chapter = ch.borrow();
+        let chapter = ch;
+        let content_path = chapter.path.as_ref()
+            .ok_or_else(|| Error::ContentFileNotFound(
+                format!("Content file was not found for Chapter {}", &chapter.name)))?;
+        trace!("add a chapter {:?} by a path = {:?}", chapter.name, content_path.clone());
+        let path = content_path.clone().with_extension("html").display().to_string();
+        let mut content = EpubContent::new(path, rendered.as_bytes())
+            .title(format!("{}", chapter));
 
-        let level = ch.number.as_ref().map(|n| n.len() as i32 - 1).unwrap_or(0);
+        let level = chapter.number.as_ref().map(|n| n.len() as i32 - 1).unwrap_or(0);
         content = content.level(level);
 
         self.builder.add_content(content)?;
 
         // second pass to actually add the sub-chapters
-        for sub_item in &ch.sub_items {
-            if let BookItem::Chapter(ref sub_ch) = *sub_item {
+        for sub_item in &chapter.sub_items {
+            if let BookItem::Chapter(sub_ch) = &mut sub_item.clone() {
                 trace!("add sub-item = {:?}", sub_ch.name);
                 self.add_chapter(sub_ch)?;
             }
@@ -121,8 +140,15 @@ impl<'a> Generator<'a> {
 
     /// Render the chapter into its fully formed HTML representation.
     fn render_chapter(&self, ch: &Chapter) -> Result<String, RenderError> {
+
+        let mut options = Options::empty();
+        options.insert(Options::ENABLE_TABLES);
+        options.insert(Options::ENABLE_FOOTNOTES);
+        options.insert(Options::ENABLE_STRIKETHROUGH);
+        options.insert(Options::ENABLE_TASKLISTS);
+
         let mut body = String::new();
-        html::push_html(&mut body, Parser::new(&ch.content));
+        html::push_html(&mut body, Parser::new_ext(&ch.content, options));
 
         let css_path = ch.path.as_ref()
             .ok_or_else(|| RenderError::new(format!("No CSS found by a path =  = {:?}", ch.path)))?;
