@@ -1,36 +1,60 @@
-extern crate epub;
-extern crate mdbook;
-extern crate mdbook_epub;
-extern crate tempdir;
+use ::epub;
+use std::env;
+use ::mdbook;
+use ::mdbook_epub;
+use ::tempdir;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate serial_test;
 
 use epub::doc::EpubDoc;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempdir::TempDir;
+use std::sync::Once;
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
 use mdbook::preprocess::{Preprocessor, LinkPreprocessor};
 use mdbook_epub::Error;
 use anyhow::Result;
 
+static INIT: Once = Once::new();
+
+fn init_logging() {
+    INIT.call_once(|| {
+        env_logger::init();
+    });
+}
+
 /// Convenience function for compiling the dummy book into an `EpubDoc`.
-fn generate_epub() -> Result<EpubDoc, Error> {
+fn generate_epub() -> Result< (EpubDoc, PathBuf), Error> {
     let (ctx, _md, temp) = create_dummy_book().unwrap();
     let mut preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
     let link_proc = LinkPreprocessor::new();
     preprocessors.push(Box::new(link_proc));
 
+    debug!("temp dir = {:?}", &temp);
     mdbook_epub::generate(&ctx, preprocessors).expect("Generate Error");
     let output_file = mdbook_epub::output_filename(temp.path(), &ctx.config);
+    debug!("output_file = {:?}", &output_file.display());
 
-    let output_file = output_file.display().to_string();
-    Ok(EpubDoc::new(&output_file).map_err(|_| Error::EpubDocCreate(output_file))?)
+    // let output_file_name = output_file.display().to_string();
+    match EpubDoc::new(&output_file) {
+        Ok(epub) => {
+            let result: (EpubDoc, PathBuf) = (epub, output_file);
+            return Ok( result )},
+        Err(err) => {
+            error!("dummy book creation error = {}", err);
+            return Err(Error::EpubDocCreate(output_file.display().to_string()))?
+        },
+    }
 }
 
 #[test]
+#[serial]
 fn output_epub_exists() {
+    init_logging();
     let (ctx, _md, temp) = create_dummy_book().unwrap();
 
     let output_file = mdbook_epub::output_filename(temp.path(), &ctx.config);
@@ -43,7 +67,9 @@ fn output_epub_exists() {
 }
 
 #[test]
+#[serial]
 fn output_epub_is_valid() {
+    init_logging();
     let (ctx, _md, temp) = create_dummy_book().unwrap();
     let preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
 
@@ -60,6 +86,7 @@ fn output_epub_is_valid() {
 }
 
 fn epub_check(path: &Path) -> Result<(), Error> {
+    init_logging();
     let cmd = Command::new("epubcheck").arg(path).output();
 
     match cmd {
@@ -78,29 +105,51 @@ fn epub_check(path: &Path) -> Result<(), Error> {
 }
 
 #[test]
+#[serial]
 fn look_for_chapter_1_heading() {
+    init_logging();
+    debug!("look_for_chapter_1_heading...");
     let mut doc = generate_epub().unwrap();
+    debug!("doc current path = {:?}", doc.1);
 
-    let path = Path::new("OEBPS").join("chapter_1.html");
-    let path = path.display().to_string();
-    let content = doc.get_resource_str_by_path(path).unwrap();
-    debug!("{}", content);
+    let path;
+    if cfg!(target_os = "linux") {
+        path = Path::new("OEBPS").join("chapter_1.html"); // linux
+    } else {
+        path = Path::new("OEBPS/chapter_1.html").to_path_buf(); // windows with 'forward slash' /
+    }
+    debug!("short path = {:?}", path.display().to_string());
+    debug!("full path = {:?}", &doc.1);
+    let file = doc.0.get_resource_str_by_path(path);
+    debug!("file = {:?}", &file);
+    let content = file.unwrap();
+    debug!("content = {:?}", content.len());
     assert!(content.contains("<h1>Chapter 1</h1>"));
     assert!(!content.contains("{{#rustdoc_include")); // should not be present
     assert!(content.contains("loop {")); // should be present by replacement
 }
 
 #[test]
+#[serial]
 fn rendered_document_contains_all_chapter_files_and_assets() {
+    init_logging();
+    debug!("rendered_document_contains_all_chapter_files_and_assets...");
     let chapters = vec!["chapter_1.html", "rust-logo.png"];
     let mut doc = generate_epub().unwrap();
+    debug!("doc current path = {:?} / {:?}", doc.0.get_current_path(), doc.1);
 
     for chapter in chapters {
-        let path = Path::new("OEBPS").join(chapter);
-        let path = path.display().to_string();
-        let got = doc.get_resource_by_path(&path);
-
-        assert!(got.is_ok(), "{}", path);
+        let path;
+        if cfg!(target_os = "windows") {
+            path = Path::new("OEBPS/").join(chapter); // windows with 'forward slash' /
+        } else {
+            path = Path::new("OEBPS").join(chapter); // linux
+        }
+        // let path = path.display().to_string();
+        debug!("path = {}", &path.display().to_string());
+        let got = doc.0.get_resource_by_path(&path);
+        debug!("got = {:?}", got.is_ok());
+        assert!(got.is_ok(), "{}", &path.display().to_string());
     }
 }
 
@@ -112,15 +161,17 @@ fn create_dummy_book() -> Result<(RenderContext, MDBook, TempDir), Error> {
     let dummy_book = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("dummy");
+    debug!("dummy_book = {:?}", &dummy_book.display().to_string());
 
-    let md = MDBook::load(dummy_book)?;
+    let md = MDBook::load(dummy_book);
 
+    let book = md.expect("dummy MDBook is not loaded");
     let ctx = RenderContext::new(
-        md.root.clone(),
-        md.book.clone(),
-        md.config.clone(),
+        book.root.clone(),
+        book.book.clone(),
+        book.config.clone(),
         temp.path().to_path_buf(),
     );
 
-    Ok((ctx, md, temp))
+    Ok((ctx, book, temp))
 }

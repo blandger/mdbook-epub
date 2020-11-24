@@ -1,15 +1,12 @@
 //! A `mdbook` backend for generating a book in the `EPUB` format.
 
-extern crate epub_builder;
-use thiserror::Error;
-extern crate handlebars;
+use ::epub_builder;
+use ::thiserror::Error;
+use ::handlebars;
 #[macro_use]
 extern crate log;
-extern crate mdbook;
-extern crate mime_guess;
-extern crate pulldown_cmark;
-extern crate semver;
-extern crate serde;
+use ::mdbook;
+use ::semver;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -110,7 +107,8 @@ pub fn generate(ctx: &RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) 
     version_check(ctx)?;
 
     let outfile = output_filename(&ctx.destination, &ctx.config);
-    debug!("Output File: {}", outfile.display());
+    info!("Output File: {}", outfile.display());
+    println!("Output File: {}", outfile.display());
 
     if !ctx.destination.exists() {
         debug!(
@@ -129,7 +127,15 @@ pub fn generate(ctx: &RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) 
 /// Calculate the output filename using the `mdbook` config.
 pub fn output_filename(dest: &Path, config: &MdConfig) -> PathBuf {
     match config.book.title {
-        Some(ref title) => dest.join(title).with_extension("epub"),
+        Some(ref title) => {
+            let out_file_name;
+            if config.book.language.is_some() && config.book.version.is_some() {
+                out_file_name = format!("{}-{}-{}", title, config.book.language.as_ref().unwrap(), config.book.version.as_ref().unwrap());
+            } else {
+                out_file_name = format!("{}", title);
+            }
+            dest.join(out_file_name).with_extension("epub")
+        },
         None => dest.join("book.epub"),
     }
 }
