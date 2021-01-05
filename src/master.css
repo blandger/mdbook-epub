@@ -94,6 +94,7 @@ time,
 mark,
 audio,
 video {
+    margin: 0;
     padding: 0;
     border: 0;
     vertical-align: baseline;
@@ -113,6 +114,24 @@ dd {
     vertical-align: baseline;
 }
 
+a {
+    font-size: 1.0em;
+}
+/* unvisited link */
+a:link {
+}
+
+/* visited link */
+a:visited {
+}
+
+/* mouse over link */
+a:hover {
+}
+
+/* selected link */
+a:active {
+}
 
 /*===GENERAL PRESENTATION===*/
 
@@ -215,6 +234,7 @@ h6 {
 /*first-line indent paragraph for fiction*/
 
 p {
+    font-size: 1.0em;
     text-indent: 1.25em;
     margin: 0.2em;
 }
@@ -227,7 +247,7 @@ p code {
     overflow-x: auto;
     background: #f1f1f1;
     color: #484848;
-    padding: 0.5em;
+    padding: 0.2em;
 }
 pre {
     white-space: pre-wrap;       /* Since CSS 2.1 */
@@ -243,6 +263,7 @@ pre code {
     color: #373737;
     padding: 0.2em;
     overflow-wrap: break-word;
+    margin-left: 0.5em;
 }
 pre code.language-console {
     color: #373737;
@@ -255,7 +276,7 @@ pre code.language-rust {
 }
 
 span.caption {
-    font-size: .8em;
+    font-size: 1.0em;
     font-weight: 600;
     line-height: 1.45em;
 }

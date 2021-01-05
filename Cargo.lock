@@ -322,12 +322,14 @@ dependencies = [
 
 [[package]]
 name = "epub-builder"
-version = "0.4.8"
+version = "0.4.9"
 dependencies = [
  "chrono",
+ "env_logger 0.8.1",
  "error-chain",
  "html-escape",
  "lazy_static",
+ "log 0.4.11",
  "mustache",
  "regex",
  "tempdir",
