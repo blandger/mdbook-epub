@@ -5,17 +5,16 @@ use std::{fmt::{self, Debug, Formatter},
           path::{PathBuf},
 };
 use epub_builder::{EpubBuilder, EpubContent, ZipLibrary};
+use pulldown_cmark::{html, Parser, Options};
+use super::Error;
 use handlebars::{Handlebars, RenderError};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::preprocess::{PreprocessorContext, Preprocessor};
 use mdbook::renderer::{RenderContext};
-use pulldown_cmark::{ Options, html, Parser };
 
 use crate::config::Config;
 use crate::DEFAULT_CSS;
 use crate::resources::{self, Asset};
-
-use super::Error;
 
 /// The actual EPUB book renderer.
 pub struct Generator<'a> {
@@ -138,17 +137,20 @@ impl<'a> Generator<'a> {
         Ok(())
     }
 
+    pub fn new_cmark_parser(text: &str) -> Parser<'_> {
+        let mut opts = Options::empty();
+        opts.insert(Options::ENABLE_TABLES);
+        opts.insert(Options::ENABLE_FOOTNOTES);
+        opts.insert(Options::ENABLE_STRIKETHROUGH);
+        opts.insert(Options::ENABLE_TASKLISTS);
+        Parser::new_ext(text, opts)
+    }
+
     /// Render the chapter into its fully formed HTML representation.
     fn render_chapter(&self, ch: &Chapter) -> Result<String, RenderError> {
 
-        let mut options = Options::empty();
-        options.insert(Options::ENABLE_TABLES);
-        options.insert(Options::ENABLE_FOOTNOTES);
-        options.insert(Options::ENABLE_STRIKETHROUGH);
-        options.insert(Options::ENABLE_TASKLISTS);
-
         let mut body = String::new();
-        html::push_html(&mut body, Parser::new_ext(&ch.content, options));
+        html::push_html(&mut body, Generator::new_cmark_parser(&ch.content));
 
         let css_path = ch.path.as_ref()
             .ok_or_else(|| RenderError::new(format!("No CSS found by a path =  = {:?}", ch.path)))?;
