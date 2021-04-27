@@ -3,7 +3,6 @@ use ::env_logger;
 extern crate log;
 use ::mdbook;
 use ::mdbook_epub;
-use ::serde_json;
 use ::structopt;
 
 use mdbook::renderer::RenderContext;

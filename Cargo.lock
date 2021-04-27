@@ -322,14 +322,13 @@ dependencies = [
 
 [[package]]
 name = "epub-builder"
-version = "0.4.9"
+version = "0.4.8"
+source = "git+https://github.com/blandger/epub-builder.git#5d86f372e4a13fa81b5cfa72ee29f89a00a63339"
 dependencies = [
  "chrono",
- "env_logger 0.8.1",
  "error-chain",
  "html-escape",
  "lazy_static",
- "log 0.4.11",
  "mustache",
  "regex",
  "tempdir",
@@ -944,6 +943,7 @@ checksum = "7ffc5c5338469d4d3ea17d269fa8ea3512ad247247c30bd2df69e68309ed0a08"
 [[package]]
 name = "mdbook"
 version = "0.4.7"
+source = "git+https://github.com/blandger/mdBook.git#93e6987889c4ea7171b92615b3f8f7dcc1011799"
 dependencies = [
  "ammonia",
  "anyhow",
@@ -973,7 +973,7 @@ dependencies = [
 
 [[package]]
 name = "mdbook-epub"
-version = "0.4.1-alpha.0"
+version = "0.4.7-beta"
 dependencies = [
  "anyhow",
  "env_logger 0.8.1",
