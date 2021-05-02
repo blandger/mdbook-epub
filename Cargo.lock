@@ -322,13 +322,15 @@ dependencies = [
 
 [[package]]
 name = "epub-builder"
-version = "0.4.8"
-source = "git+https://github.com/blandger/epub-builder.git#5d86f372e4a13fa81b5cfa72ee29f89a00a63339"
+version = "0.4.9"
+source = "git+https://github.com/blandger/epub-builder.git?branch=navigation_opt_fix#b77f54587f25a7cbdd1196c88ec7bd0cd6097aab"
 dependencies = [
  "chrono",
+ "env_logger 0.8.1",
  "error-chain",
  "html-escape",
  "lazy_static",
+ "log 0.4.11",
  "mustache",
  "regex",
  "tempdir",
