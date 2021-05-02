@@ -46,10 +46,10 @@ Now everything is set up, just run `mdbook` as normal and the output directory
 
 The `mdbook-epub` executable can be run in "standalone" mode. This is where
 the backend can be used without needing to be called by `mdbook`, useful if
-you only want to render the EPUB document.
+you only want to render the EPUB document. Path is MD sources folder e.g /xxx/src/ (with SUMMARY.md inside)
 
 ```
-$ mdbook-epub --standalone ./path/to/book/dir
+$ RUST_LOG=debug mdbook-epub ./path/to/book/dir
 ```
 
 
@@ -89,9 +89,9 @@ list is by no means complete, so feature requests are most welcome!
    - [ ] Actually make that stylesheet pretty enough for human consumption
 - [x] Include user-defined stylesheets and themes
 - [ ] Allow users to tweak the generated page by providing their own template
-- [ ] Ensure the generated document is viewable on the following platforms
-  - [ ] Amazon Kindle
-  - [ ] Sony PRS-T3
+- [x] Ensure the generated document is viewable on the following platforms
+  - [x] Amazon Kindle
+  - [x] Sony PRS-T3
 
 
 ## Contributing
