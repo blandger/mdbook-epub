@@ -50,12 +50,12 @@ fn run(args: &Args) -> Result<(), Error> {
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
-    #[structopt(
+/*    #[structopt(
         short = "s",
         long = "standalone",
         help = "Run standalone (i.e. not as a mdbook plugin)"
     )]
-    standalone: bool,
+    standalone: bool,*/
     #[structopt(help = "The book to render.", parse(from_os_str), default_value = ".")]
     root: PathBuf,
 }
