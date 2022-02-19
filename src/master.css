@@ -133,6 +133,7 @@ a:active {
 /*===Body Presentation and Margins===*/
 /* Text alignment is still a matter of debate. Feel free to change to text-align: left; */
 body {
+    margin: 1em;
     text-align: justify;
     line-height: 120%;
 }
@@ -371,7 +372,7 @@ span.ibu {
 }
 
 
-/* This fixes the bug where the text-align property of block-level elements is not recognized on iBooks 
+/* This fixes the bug where the text-align property of block-level elements is not recognized on iBooks
  example: html markup would look like <p class="centered"><span class="ipadcenterfix">Centered Content</span></p> */
 span.ipadcenterfix {
     text-align: center;
