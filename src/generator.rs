@@ -1,16 +1,18 @@
-use std::{fmt::{self, Debug, Formatter},
-          fs::File,
-          io::{Read, Write},
-          iter,
-          path::{PathBuf},
+use std::{
+    fmt::{self, Debug, Formatter},
+    fs::File,
+    io::{Read, Write},
+    iter,
+    path::PathBuf,
 };
-use epub_builder::{EpubBuilder, EpubContent, ZipLibrary};
-use pulldown_cmark::{html, Parser, Options, Event, CowStr, Tag};
+
 use super::Error;
+use epub_builder::{EpubBuilder, EpubContent, ZipLibrary};
 use handlebars::{Handlebars, RenderError};
 use mdbook::book::{BookItem, Chapter};
 use mdbook::preprocess::{PreprocessorContext, Preprocessor};
 use mdbook::renderer::{RenderContext};
+use pulldown_cmark::{html, CowStr, Event, Options, Parser, Tag};
 
 use crate::config::Config;
 use crate::DEFAULT_CSS;
@@ -69,8 +71,7 @@ impl<'a> Generator<'a> {
                 .metadata("author", self.ctx.config.book.authors.join(", "))?;
         }
 
-        self.builder
-            .metadata("generator", env!("CARGO_PKG_NAME"))?;
+        self.builder.metadata("generator", env!("CARGO_PKG_NAME"))?;
 
         if let Some(lang) = self.ctx.config.book.language.clone() {
             self.builder.metadata("lang", lang)?;
@@ -118,10 +119,17 @@ impl<'a> Generator<'a> {
 
         // let chapter = ch.borrow();
         let chapter = ch;
-        let content_path = chapter.path.as_ref()
-            .ok_or_else(|| Error::ContentFileNotFound(
-                format!("Content file was not found for Chapter {}", &chapter.name)))?;
-        trace!("add a chapter {:?} by a path = {:?}", chapter.name, content_path.clone());
+        let content_path = chapter.path.as_ref().ok_or_else(|| {
+            Error::ContentFileNotFound(format!(
+                "Content file was not found for Chapter {}",
+                &chapter.name
+            ))
+        })?;
+        trace!(
+            "add a chapter {:?} by a path = {:?}",
+            chapter.name,
+            content_path
+        .clone());
         let path = content_path.clone().with_extension("html").display().to_string();
         let mut content = EpubContent::new(path, rendered.as_bytes())
             .title(format!("{}", chapter));
@@ -161,8 +169,9 @@ impl<'a> Generator<'a> {
 
         html::push_html(&mut body, events);
 
-        let css_path = ch.path.as_ref()
-            .ok_or_else(|| RenderError::new(format!("No CSS found by a path =  = {:?}", ch.path)))?;
+        let css_path = ch.path.as_ref().ok_or_else(|| {
+            RenderError::new(format!("No CSS found by a path =  = {:?}", ch.path))
+        })?;
 
         let stylesheet_path = css_path
             .parent()
@@ -182,8 +191,7 @@ impl<'a> Generator<'a> {
     fn embed_stylesheets(&mut self) -> Result<(), Error> {
         debug!("Embedding stylesheets");
 
-        let stylesheet = self
-            .generate_stylesheet()?;
+        let stylesheet = self.generate_stylesheet()?;
         self.builder.stylesheet(stylesheet.as_slice())?;
 
         Ok(())
@@ -212,23 +220,34 @@ impl<'a> Generator<'a> {
             debug!("Embedding resource: {:?}", path);
 
             let full_path: PathBuf;
-            if let Ok(full_path_internal) = path.canonicalize() { // try process by 'path only' first
+            if let Ok(full_path_internal) = path.canonicalize() {
+                // try process by 'path only' first
                 debug!("Found resource by a path = {:?}", full_path_internal);
                 full_path = full_path_internal; // OK
             } else {
                 debug!("Failed to find resource by path, trying to compose 'root + src + path'...");
                 // try process by using 'root + src + path'
-                let full_path_composed = self.ctx.root.join(self.ctx.config.book.src.clone()).join(path);
+                let full_path_composed = self
+                    .ctx
+                    .root
+                    .join(self.ctx.config.book.src.clone())
+                    .join(path);
                 debug!("Try embed resource by a path = {:?}", full_path_composed);
                 if let Ok(full_path_src) = full_path_composed.canonicalize() {
                     full_path = full_path_src; // OK
                 } else {
                     // try process by using 'root + path' finally
-                    let mut error = format!("Failed to find resource file by 'root + src + path' = {:?}", full_path_composed);
+                    let mut error = format!(
+                        "Failed to find resource file by 'root + src + path' = {:?}",
+                        full_path_composed
+                    );
                     warn!("{:?}", error);
                     debug!("Failed to find resource, trying to compose by 'root + path' only...");
                     let full_path_composed = self.ctx.root.join(path);
-                    error = format!("Failed to find resource file by a root + path = {:?}", full_path_composed);
+                    error = format!(
+                        "Failed to find resource file by a root + path = {:?}",
+                        full_path_composed
+                    );
                     full_path = full_path_composed.canonicalize().expect(&error);
                 }
             }
@@ -236,7 +255,7 @@ impl<'a> Generator<'a> {
 
             let content = File::open(&full_path).map_err(|_| Error::AssetOpen)?;
             debug!("Adding resource: {:?} / {:?} ", path, mt.to_string());
-            self.builder.add_resource(&path, content, mt.to_string())?;
+            self.builder.add_resource(path, content, mt.to_string())?;
         }
 
         Ok(())
@@ -252,16 +271,24 @@ impl<'a> Generator<'a> {
                 full_path = full_path_internal;
             } else {
                 debug!("Failed to find resource, trying to compose path...");
-                let full_path_composed = self.ctx.root.join(self.ctx.config.book.src.clone()).join(path);
+                let full_path_composed = self
+                    .ctx
+                    .root
+                    .join(self.ctx.config.book.src.clone())
+                    .join(path);
                 debug!("Try cover image by a path = {:?}", full_path_composed);
-                let error = format!("Failed to find cover image by full path-name = {:?}", full_path_composed);
+                let error = format!(
+                    "Failed to find cover image by full path-name = {:?}",
+                    full_path_composed
+                );
                 full_path = full_path_composed.canonicalize().expect(&error);
             }
             let mt = mime_guess::from_path(&full_path).first_or_octet_stream();
 
             let content = File::open(&full_path).map_err(|_| Error::AssetOpen)?;
             debug!("Adding cover image: {:?} / {:?} ", path, mt.to_string());
-            self.builder.add_cover_image(&path, content, mt.to_string())?;
+            self.builder
+                .add_cover_image(path, content, mt.to_string())?;
         }
 
         Ok(())
@@ -295,11 +322,15 @@ impl<'a> Generator<'a> {
                 debug!("Failed to find stylesheet, trying to compose path...");
                 let full_path_composed = self.ctx.root.join(additional_css);
                 debug!("Try stylesheet by a path = {:?}", full_path_composed);
-                let error = format!("Failed to find stylesheet by full path-name = {:?}", full_path_composed);
+                let error = format!(
+                    "Failed to find stylesheet by full path-name = {:?}",
+                    full_path_composed
+                );
                 full_path = full_path_composed.canonicalize().expect(&error);
             }
             let mut f = File::open(&full_path).map_err(|_| Error::CssOpen(full_path.clone()))?;
-            f.read_to_end(&mut stylesheet).map_err(|_| Error::StylesheetRead)?;
+            f.read_to_end(&mut stylesheet)
+                .map_err(|_| Error::StylesheetRead)?;
         }
         debug!("found style(s) = [{}]", stylesheet.len());
         Ok(stylesheet)
@@ -383,4 +414,3 @@ fn convert_quotes_to_curly(original_text: &str) -> String {
         })
         .collect()
 }
-
