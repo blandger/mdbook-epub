@@ -161,10 +161,9 @@ impl<'a> Generator<'a> {
             "add a chapter {:?} by a path = {:?}",
             chapter.name,
             content_path
-        .clone());
-        let path = content_path.clone().with_extension("html").display().to_string();
-        let mut content = EpubContent::new(path, rendered.as_bytes())
-            .title(format!("{}", chapter));
+        );
+        let path = content_path.with_extension("html").display().to_string();
+        let mut content = EpubContent::new(path, rendered.as_bytes()).title(format!("{ch}"));
 
         let level = chapter.number.as_ref().map(|n| n.len() as i32 - 1).unwrap_or(0);
         content = content.level(level);
@@ -279,15 +278,13 @@ impl<'a> Generator<'a> {
                 } else {
                     // try process by using 'root + path' finally
                     let mut error = format!(
-                        "Failed to find resource file by 'root + src + path' = {:?}",
-                        full_path_composed
+                        "Failed to find resource file by 'root + src + path' = {full_path_composed:?}"
                     );
                     warn!("{:?}", error);
                     debug!("Failed to find resource, trying to compose by 'root + path' only...");
                     let full_path_composed = self.ctx.root.join(path);
                     error = format!(
-                        "Failed to find resource file by a root + path = {:?}",
-                        full_path_composed
+                        "Failed to find resource file by a root + path = {full_path_composed:?}"
                     );
                     full_path = full_path_composed.canonicalize().expect(&error);
                 }
@@ -319,8 +316,7 @@ impl<'a> Generator<'a> {
                     .join(path);
                 debug!("Try cover image by a path = {:?}", full_path_composed);
                 let error = format!(
-                    "Failed to find cover image by full path-name = {:?}",
-                    full_path_composed
+                    "Failed to find cover image by full path-name = {full_path_composed:?}"
                 );
                 full_path = full_path_composed.canonicalize().expect(&error);
             }
@@ -353,10 +349,8 @@ impl<'a> Generator<'a> {
                 debug!("Failed to find stylesheet, trying to compose path...");
                 let full_path_composed = self.ctx.root.join(additional_css);
                 debug!("Try stylesheet by a path = {:?}", full_path_composed);
-                let error = format!(
-                    "Failed to find stylesheet by full path-name = {:?}",
-                    full_path_composed
-                );
+                let error =
+                    format!("Failed to find stylesheet by full path-name = {full_path_composed:?}");
                 full_path = full_path_composed.canonicalize().expect(&error);
             }
             let mut f = File::open(&full_path).map_err(|_| Error::CssOpen(full_path.clone()))?;
@@ -678,10 +672,7 @@ mod tests {
         assert_eq!(g.assets.len(), 1);
 
         let pat = |heading, prefix| {
-            format!(
-                "<h1>{}</h1>\n<p><img src=\"{}cache/811c431d49ec880b.svg\"",
-                heading, prefix
-            )
+            format!("<h1>{heading}</h1>\n<p><img src=\"{prefix}cache/811c431d49ec880b.svg\"")
         };
         if let BookItem::Chapter(ref ch) = ctx.book.sections[0] {
             let rendered: String = g.render_chapter(ch).unwrap();
