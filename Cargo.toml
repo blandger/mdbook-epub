@@ -14,6 +14,9 @@ edition = "2021"
 [package.metadata.release]
 sign-commit = true
 
+[registries.crates-io]
+protocol = "sparse"
+
 [badges]
 travis-ci = { repository = "Michael-F-Bryan/mdbook-epub", branch = "master" }
 maintenance = { status = "actively-developed" }
