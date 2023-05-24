@@ -48,6 +48,7 @@ toml = "0.5"
 html_parser = "0.6.2"
 url = "2.3"
 ureq = "2.5"
+const_format = "0.2.30"
 
 [dev-dependencies]
 tempdir = "0.3.7"
