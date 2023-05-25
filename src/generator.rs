@@ -37,12 +37,13 @@ pub struct Generator<'a> {
 
 impl<'a> Generator<'a> {
     pub fn new(ctx: &'a RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) -> Result<Generator<'a>, Error> {
-        Self::new_with_handler(ctx, ResourceHandler)
+        Self::new_with_handler(ctx, ResourceHandler, preprocessors)
     }
 
     fn new_with_handler(
         ctx: &'a RenderContext,
         handler: impl ContentRetriever + 'static,
+        preprocessors: Vec<Box<dyn Preprocessor>>
     ) -> Result<Generator<'a>, Error> {
         let handler = Box::new(handler);
         let builder = EpubBuilder::new(ZipLibrary::new()?)?;
@@ -159,11 +160,11 @@ impl<'a> Generator<'a> {
         })?;
         trace!(
             "add a chapter {:?} by a path = {:?}",
-            chapter.name,
+            &chapter.name,
             content_path
         );
         let path = content_path.with_extension("html").display().to_string();
-        let mut content = EpubContent::new(path, rendered.as_bytes()).title(format!("{ch}"));
+        let mut content = EpubContent::new(path, rendered.as_bytes()).title(format!("{chapter}"));
 
         let level = chapter.number.as_ref().map(|n| n.len() as i32 - 1).unwrap_or(0);
         content = content.level(level);
@@ -564,8 +565,8 @@ mod tests {
                 .withf(move |path, _| path == should_be)
                 .returning(|_, _| Ok(()));
         }
-
-        let mut g = Generator::new_with_handler(&ctx, mock_client).unwrap();
+        let preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
+        let mut g = Generator::new_with_handler(&ctx, mock_client, preprocessors).unwrap();
         g.find_assets().unwrap();
         assert_eq!(g.assets.len(), 3);
         g.additional_assets().unwrap();
@@ -672,7 +673,8 @@ mod tests {
         chvalue.push(ch2);
 
         let ctx = RenderContext::from_json(json.to_string().as_bytes()).unwrap();
-        let mut g = Generator::new(&ctx).unwrap();
+        let preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
+        let mut g = Generator::new(&ctx, preprocessors).unwrap();
         g.find_assets().unwrap();
         assert_eq!(g.assets.len(), 1);
 
@@ -710,7 +712,8 @@ mod tests {
         )
         .to_string();
         let ctx = RenderContext::from_json(json.as_bytes()).unwrap();
-        let mut g = Generator::new(&ctx).unwrap();
+        let preprocessors: Vec<Box<dyn Preprocessor>> = Vec::new();
+        let mut g = Generator::new(&ctx, preprocessors).unwrap();
         g.find_assets().unwrap();
     }
 

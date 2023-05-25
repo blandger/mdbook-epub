@@ -42,7 +42,7 @@ env_logger = "0.10"
 log = "0.4"
 #mdbook = { version = "0.4.29", default-features = false }
 #mdbook = { path = "../mdBook-blandger" }
-mdbook = { git = "https://github.com/blandger/mdBook.git", branch = "master" }
+mdbook = { git = "https://github.com/blandger/mdBook.git", branch = "feature/links_preprocessor" }
 handlebars = "4.2"
 toml = "0.5"
 html_parser = "0.6.2"
