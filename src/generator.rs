@@ -148,9 +148,19 @@ impl<'a> Generator<'a> {
             renderer.preprocess_chapter(&self.preprocess_ctx, ch)?;
         }
         trace!("{}", &ch.content);
-        let rendered = self.render_chapter(&ch)?;
+        let rendered_result = self.render_chapter(&ch);
+        let rendered: String;
+        // let's skip chapter without content (drafts)
+        match rendered_result {
+            Ok(rendered_content) => {
+                rendered = rendered_content;
+            }
+            Err(error_msg) => {
+                warn!("SKIPPED chapter '{}' dur to error = {}", &ch.name, error_msg);
+                return Ok(());
+            }
+        }
 
-        // let chapter = ch.borrow();
         let chapter = ch;
         let content_path = chapter.path.as_ref().ok_or_else(|| {
             Error::ContentFileNotFound(format!(
@@ -199,7 +209,7 @@ impl<'a> Generator<'a> {
             })?
         } else {
             return Err(RenderError::new(format!(
-                "Draft chapter: {} could not be rendered.",
+                "Draft chapter: '{}' could not be rendered.",
                 ch.name
             )));
         };
