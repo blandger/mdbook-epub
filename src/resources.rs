@@ -1,3 +1,4 @@
+use const_format::concatcp;
 use html_parser::{Dom, Node};
 use mdbook::book::BookItem;
 use mdbook::renderer::RenderContext;
@@ -5,9 +6,8 @@ use mime_guess::Mime;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 use std::collections::HashMap;
 use std::ffi::OsStr;
-use std::path::{Component, MAIN_SEPARATOR_STR, Path, PathBuf};
+use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
 use url::Url;
-use const_format::concatcp;
 
 use crate::Error;
 
@@ -41,7 +41,7 @@ pub(crate) fn find(ctx: &RenderContext) -> Result<HashMap<String, Asset>, Error>
                     }?;
 
                     // TODO: that way is CORRECT generation way
-/*                    let relative = asset.location_on_disk.strip_prefix(&src_dir);
+                    /*                    let relative = asset.location_on_disk.strip_prefix(&src_dir);
                     match relative {
                         Ok(relative_link_path) => {
                             let link_key: String = String::from(relative_link_path.file_name().unwrap().to_str().unwrap());
@@ -117,7 +117,10 @@ impl Asset {
     }
 
     fn from_local(link: &str, src_dir: &Path, chapter_path: &Path) -> Result<Asset, Error> {
-        debug!("Composing asset path for {:?} + {:?} in chapter = {:?}", src_dir, link, chapter_path);
+        debug!(
+            "Composing asset path for {:?} + {:?} in chapter = {:?}",
+            src_dir, link, chapter_path
+        );
         let chapter_path = src_dir.join(chapter_path);
         // let relative_link = normalize_path(PathBuf::from(link).as_path());
         // Since chapter_path is some file and joined with src_dir, it's safe to
@@ -129,18 +132,25 @@ impl Asset {
         // let full_filename = src_dir.join(&relative_link);
 
         debug!("Joined full_filename = {:?}", &full_filename.display());
-        let absolute_location = full_filename
-            .canonicalize()
-            .map_err(|this_error| Error::AssetFileNotFound(
-                format!("Asset was not found: '{link}' by '{}', error = {}", &full_filename.display(), this_error)))?;
+        let absolute_location = full_filename.canonicalize().map_err(|this_error| {
+            Error::AssetFileNotFound(format!(
+                "Asset was not found: '{link}' by '{}', error = {}",
+                &full_filename.display(),
+                this_error
+            ))
+        })?;
         if !absolute_location.is_file() || absolute_location.is_symlink() {
             return Err(Error::AssetFile(absolute_location));
         }
         // Use filename as embedded file path with content from absolute_location.
         debug!("Extracting file name from = {:?}", &full_filename.display());
-        let filename = absolute_location.as_path().file_name().unwrap().to_str().unwrap();
-
-/*        let filename = if full_filename.is_symlink() {
+        let filename = absolute_location
+            .as_path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap();
+        /*        let filename = if full_filename.is_symlink() {
             debug!(
                 "Strip symlinked asset '{:?}' prefix without canonicalized path.",
                 &relative_link
@@ -154,7 +164,10 @@ impl Asset {
             &absolute_location,
             AssetKind::Local(PathBuf::from(link)),
         );
-        debug!("[{:#?}] = {:?} : {:?}", asset.source, asset.filename, asset.location_on_disk);
+        debug!(
+            "[{:#?}] = {:?} : {:?}",
+            asset.source, asset.filename, asset.location_on_disk
+        );
         Ok(asset)
     }
 
@@ -168,10 +181,11 @@ impl Asset {
             reassigned_asset_root.pop();
         }
         // if link points to upper folder
-        if  !link.is_empty() &&
-            (link.starts_with(MAIN_SEPARATOR_STR)
+        if !link.is_empty()
+            && (link.starts_with(MAIN_SEPARATOR_STR)
                 || link.starts_with(UPPER_PARENT)
-                || link.starts_with(UPPER_PARENT_STARTS_SLASH)) {
+                || link.starts_with(UPPER_PARENT_STARTS_SLASH))
+        {
             reassigned_asset_root.pop(); // remove an one folder from asset's path
         }
         reassigned_asset_root.join(normalized_link) // compose final result
@@ -404,9 +418,15 @@ mod tests {
             \n\n![Image 4](assets/rust-logo.png)\n[a link](to/nowhere)
             ![Image 4](../third_party/wikimedia/Epub_logo_color.svg)\n[a link](to/nowhere)";
         let should_be = vec![
-            upper_parent_dir.join("third_party/wikimedia/Epub_logo_color.svg").canonicalize().unwrap(),
+            upper_parent_dir
+                .join("third_party/wikimedia/Epub_logo_color.svg")
+                .canonicalize()
+                .unwrap(),
             parent_dir.join("rust-logo.png").canonicalize().unwrap(),
-            parent_dir.join("assets/rust-logo.png").canonicalize().unwrap(),
+            parent_dir
+                .join("assets/rust-logo.png")
+                .canonicalize()
+                .unwrap(),
             parent_dir.join("reddit.svg").canonicalize().unwrap(),
         ];
 
@@ -521,8 +541,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected =
-    "Asset was not found: 'wikimedia' by 'tests/dummy/third_party/a.md/wikimedia', error = No such file or directory (os error 2)")]
+    #[should_panic(
+        expected = "Asset was not found: 'wikimedia' by 'tests/dummy/third_party/a.md/wikimedia', error = No such file or directory (os error 2)"
+    )]
     fn find_asset_fail_when_it_is_a_dir() {
         panic!(
             "{}",
@@ -561,42 +582,68 @@ mod tests {
 
         let link = "./asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_chapter_dir);
-        assert_eq!(asset_path.as_path(), Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/dummy/src").join("asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("tests/dummy/src")
+                .join("asset1.jpg")
+        );
     }
 
-        #[test]
+    #[test]
     fn test_join_chapter_dir_with_link_to_full_path() {
         let mut book_or_chapter_src = PathBuf::from("/media/book/src");
 
         let link = "./asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/src/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/src/asset1.jpg")
+        );
 
         let link = "asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/src/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/src/asset1.jpg")
+        );
 
         let link = "../upper/assets/asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/upper/assets/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/upper/assets/asset1.jpg")
+        );
 
         let link = "assets/asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/src/assets/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/src/assets/asset1.jpg")
+        );
 
         let link = "./assets/asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/src/assets/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/src/assets/asset1.jpg")
+        );
 
         book_or_chapter_src = PathBuf::from("/media/book/src/chapter1");
 
         let link = "../assets/asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/src/assets/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/src/assets/asset1.jpg")
+        );
 
         let link = "../assets/asset1.jpg";
         let asset_path = Asset::join_src_with_link_to_full_path(link, &book_or_chapter_src);
-        assert_eq!(asset_path.as_path(), Path::new("/media/book/src/assets/asset1.jpg"));
+        assert_eq!(
+            asset_path.as_path(),
+            Path::new("/media/book/src/assets/asset1.jpg")
+        );
     }
 
     #[test]

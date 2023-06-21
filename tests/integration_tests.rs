@@ -1,26 +1,27 @@
-use ::epub;
-use ::mdbook;
-use ::mdbook_epub;
-use ::tempdir;
-use std::env;
-use std::fs::File;
-use std::io::BufReader;
-
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate serial_test;
 
-use epub::doc::EpubDoc;
-use mdbook::renderer::RenderContext;
-use mdbook::MDBook;
-use mdbook::preprocess::{Preprocessor, LinkPreprocessor};
-use mdbook_epub::Error;
-use anyhow::Result;
+use std::env;
+use std::fs::File;
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Once;
+
+use ::epub;
+use ::mdbook;
+use ::tempdir;
+use anyhow::Result;
+use epub::doc::EpubDoc;
+use mdbook::preprocess::{LinkPreprocessor, Preprocessor};
+use mdbook::renderer::RenderContext;
+use mdbook::MDBook;
 use tempdir::TempDir;
+
+use ::mdbook_epub;
+use mdbook_epub::Error;
 
 static INIT: Once = Once::new();
 
@@ -44,9 +45,7 @@ fn generate_epub() -> Result<(EpubDoc<BufReader<File>>, PathBuf), Error> {
 
     // let output_file_name = output_file.display().to_string();
     match EpubDoc::new(&output_file) {
-        Ok(epub) => {
-            Ok((epub, output_file))
-        }
+        Ok(epub) => Ok((epub, output_file)),
         Err(err) => {
             error!("dummy book creation error = {}", err);
             Err(Error::EpubDocCreate(output_file.display().to_string()))

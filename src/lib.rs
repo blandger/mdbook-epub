@@ -112,7 +112,10 @@ fn version_check(ctx: &RenderContext) -> Result<(), Error> {
 }
 
 /// Generate an `EPUB` version of the provided book.
-pub fn generate(ctx: &RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) -> Result<(), Error> {
+pub fn generate(
+    ctx: &RenderContext,
+    preprocessors: Vec<Box<dyn Preprocessor>>,
+) -> Result<(), Error> {
     info!("Starting the EPUB generator");
     version_check(ctx)?;
 
@@ -140,13 +143,18 @@ pub fn output_filename(dest: &Path, config: &MdConfig) -> PathBuf {
         Some(ref title) => {
             let out_file_name;
             if config.book.language.is_some() && config.book.version.is_some() {
-                out_file_name = format!("{}-{}-{}.zip", title, config.book.language.as_ref().unwrap(), config.book.version.as_ref().unwrap());
+                out_file_name = format!(
+                    "{}-{}-{}.zip",
+                    title,
+                    config.book.language.as_ref().unwrap(),
+                    config.book.version.as_ref().unwrap()
+                );
             } else {
                 out_file_name = title.to_string();
             }
             debug!("Composed file name = {}", &out_file_name);
             dest.join(out_file_name).with_extension("epub")
-        },
+        }
         None => dest.join("book.epub"),
     }
 }

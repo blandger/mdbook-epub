@@ -12,13 +12,14 @@ use epub_builder::{EpubBuilder, EpubContent, ZipLibrary};
 use handlebars::{Handlebars, RenderError};
 use html_parser::{Dom, Node};
 use mdbook::book::{BookItem, Chapter};
-use mdbook::preprocess::{PreprocessorContext, Preprocessor};
-use mdbook::renderer::{RenderContext};
+use mdbook::preprocess::{Preprocessor, PreprocessorContext};
+use mdbook::renderer::RenderContext;
 use pulldown_cmark::{html, CowStr, Event, Options, Parser, Tag};
 use url::Url;
 
 use crate::config::Config;
-use crate::resources::handler::{ContentRetriever, ResourceHandler};
+use crate::resources::handler::ContentRetriever;
+use crate::resources::handler::ResourceHandler;
 use crate::resources::{self, Asset};
 use crate::Error;
 use crate::DEFAULT_CSS;
@@ -36,14 +37,17 @@ pub struct Generator<'a> {
 }
 
 impl<'a> Generator<'a> {
-    pub fn new(ctx: &'a RenderContext, preprocessors: Vec<Box<dyn Preprocessor>>) -> Result<Generator<'a>, Error> {
+    pub fn new(
+        ctx: &'a RenderContext,
+        preprocessors: Vec<Box<dyn Preprocessor>>,
+    ) -> Result<Generator<'a>, Error> {
         Self::new_with_handler(ctx, ResourceHandler, preprocessors)
     }
 
     fn new_with_handler(
         ctx: &'a RenderContext,
         handler: impl ContentRetriever + 'static,
-        preprocessors: Vec<Box<dyn Preprocessor>>
+        preprocessors: Vec<Box<dyn Preprocessor>>,
     ) -> Result<Generator<'a>, Error> {
         let handler = Box::new(handler);
         let builder = EpubBuilder::new(ZipLibrary::new()?)?;
@@ -156,7 +160,10 @@ impl<'a> Generator<'a> {
                 rendered = rendered_content;
             }
             Err(error_msg) => {
-                warn!("SKIPPED chapter '{}' dur to error = {}", &ch.name, error_msg);
+                warn!(
+                    "SKIPPED chapter '{}' dur to error = {}",
+                    &ch.name, error_msg
+                );
                 return Ok(());
             }
         }
@@ -176,7 +183,11 @@ impl<'a> Generator<'a> {
         let path = content_path.with_extension("html").display().to_string();
         let mut content = EpubContent::new(path, rendered.as_bytes()).title(format!("{chapter}"));
 
-        let level = chapter.number.as_ref().map(|n| n.len() as i32 - 1).unwrap_or(0);
+        let level = chapter
+            .number
+            .as_ref()
+            .map(|n| n.len() as i32 - 1)
+            .unwrap_or(0);
         content = content.level(level);
 
         self.builder.add_content(content)?;
@@ -307,7 +318,12 @@ impl<'a> Generator<'a> {
             let mt = mime_guess::from_path(&full_path).first_or_octet_stream();
 
             let content = File::open(&full_path).map_err(|_| Error::AssetOpen)?;
-            debug!("Adding resource [{}]: {:?} / {:?} ", count, path, mt.to_string());
+            debug!(
+                "Adding resource [{}]: {:?} / {:?} ",
+                count,
+                path,
+                mt.to_string()
+            );
             self.builder.add_resource(path, content, mt.to_string())?;
             count += 1;
         }
@@ -536,11 +552,13 @@ fn convert_quotes_to_curly(original_text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use mime_guess::mime;
     use std::path::Path;
 
-    use super::*;
+    use mime_guess::mime;
+
     use crate::resources::{handler::MockContentRetriever, AssetKind};
+
+    use super::*;
 
     #[test]
     fn load_assets() {
