@@ -138,6 +138,11 @@ fn rendered_document_contains_all_chapter_files_and_assets() {
     debug!("rendered_document_contains_all_chapter_files_and_assets...");
     let chapters = vec!["chapter_1.html", "rust-logo.png"];
     let mut doc = generate_epub().unwrap();
+    assert_eq!(8, doc.0.resources.len());
+    assert_eq!(2, doc.0.spine.len());
+    // let title = doc.0.mdata("title");
+    assert_eq!(doc.0.mdata("title").unwrap(), "DummyBook");
+    assert_eq!(doc.0.mdata("language").unwrap(), "en");
     debug!(
         "doc current path = {:?} / {:?}",
         doc.0.get_current_path(),
@@ -150,11 +155,11 @@ fn rendered_document_contains_all_chapter_files_and_assets() {
         } else {
             Path::new("OEBPS").join(chapter) // linux
         };
-        // let path = path.display().to_string();
-        debug!("path = {}", &path.display().to_string());
+        let path = path.display().to_string();
+        debug!("path = {}", &path);
         let got = doc.0.get_resource_by_path(&path);
-        debug!("got = {:?}", got.is_ok());
-        assert!(got.is_ok(), "{}", &path.display().to_string());
+        // data length
+        assert!(got.unwrap().len() > 0);
     }
 }
 

@@ -21,6 +21,7 @@ use std::path::{Path, PathBuf};
 mod config;
 mod generator;
 mod resources;
+mod utils;
 
 pub use crate::config::Config;
 pub use crate::generator::Generator;
@@ -125,7 +126,7 @@ pub fn generate(
 
     if !ctx.destination.exists() {
         debug!(
-            "Creating destination directory ({})",
+            "Creating destination directory '{}')",
             ctx.destination.display()
         );
         create_dir_all(&ctx.destination)?;
