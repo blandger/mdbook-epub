@@ -1,4 +1,3 @@
-use std::path::MAIN_SEPARATOR_STR;
 use std::{
     collections::HashMap,
     ffi::OsString,
@@ -495,8 +494,7 @@ impl<'a> AssetLinkFilter<'a> {
         let mut fsp = OsString::new();
         for (i, component) in path.components().enumerate() {
             if i > 0 {
-                // fsp.push("/");
-                fsp.push(MAIN_SEPARATOR_STR);
+                fsp.push("/");
             }
             fsp.push(component);
         }
@@ -508,8 +506,7 @@ impl<'a> AssetLinkFilter<'a> {
             .map(|_| "..")
             .chain(iter::once(filename.as_str()))
             .collect::<Vec<_>>()
-            // .join("/")
-            .join(MAIN_SEPARATOR_STR)
+            .join("/")
     }
 }
 
@@ -743,6 +740,7 @@ mod tests {
         };
         if let BookItem::Chapter(ref ch) = ctx.book.sections[0] {
             let rendered: String = g.render_chapter(ch).unwrap();
+            debug!("{}", &rendered);
             assert!(rendered.contains(&pat("Chapter 1", "../")));
 
             if let BookItem::Chapter(ref sub_ch) = ch.sub_items[0] {
