@@ -50,7 +50,8 @@ the backend can be used without needing to be called by `mdbook`, useful if
 you only want to render the EPUB document. Path is MD sources folder e.g /xxx/src/ (with SUMMARY.md inside)
 
 ```
-$ RUST_LOG=debug mdbook-epub ./path/to/book/dir
+$ mdbook-epub -s true ./path/to/book/dir
+$ mdbook-epub --standalone true ./path/to/book/dir
 ```
 
 

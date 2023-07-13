@@ -35,7 +35,7 @@ fn run(args: &Args) -> Result<(), Error> {
         &args.root.display()
     );
     let md = MDBook::load(&args.root).expect(&error);
-    let ctx: RenderContext = if !args.plugin {
+    let ctx: RenderContext = if args.standalone {
         let destination = md.build_dir_for("epub");
         debug!(
             "EPUB book destination folder is : {:?}",
@@ -44,6 +44,7 @@ fn run(args: &Args) -> Result<(), Error> {
         debug!("EPUB book config is : {:?}", &md.config);
         RenderContext::new(md.root.clone(), md.book.clone(), md.config.clone(), destination)
     } else {
+        println!("Running mdbook-epub as plugin...");
         serde_json::from_reader(io::stdin()).map_err(|_| Error::RenderContext)?
     };
     mdbook_epub::generate(&ctx, md.clone_preprocessors())?;
@@ -58,8 +59,14 @@ fn run(args: &Args) -> Result<(), Error> {
 
 #[derive(Debug, Clone, StructOpt)]
 struct Args {
-    #[structopt(short = "p", long = "plugin", help = "Run as a mdbook plugin")]
-    plugin: bool,
+    #[structopt(
+        short = "s",
+        long = "standalone",
+        parse(try_from_str),
+        default_value = "true",
+        help = "Run standalone (i.e. not as a mdbook plugin)"
+    )]
+    standalone: bool,
     #[structopt(help = "The book to render.", parse(from_os_str), default_value = ".")]
     root: PathBuf,
 }
