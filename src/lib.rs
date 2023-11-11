@@ -1,6 +1,5 @@
 //! A `mdbook` backend for generating a book in the `EPUB` format.
 
-use ::epub_builder;
 use ::handlebars;
 use ::thiserror::Error;
 #[macro_use]
@@ -76,7 +75,7 @@ pub enum Error {
     #[error(transparent)]
     Semver(#[from] semver::Error),
     #[error(transparent)]
-    EpubBuilder(#[from] epub_builder::Error),
+    EpubBuilder(#[from] eyre::Report),
     #[error(transparent)]
     Render(#[from] handlebars::RenderError),
     #[error(transparent)]
@@ -120,7 +119,6 @@ pub fn generate(
 
     let outfile = output_filename(&ctx.destination, &ctx.config);
     info!("Output File: {}", outfile.display());
-    println!("Output File: {}", outfile.display());
 
     if !ctx.destination.exists() {
         debug!(
@@ -132,6 +130,7 @@ pub fn generate(
 
     let f = File::create(&outfile)?;
     Generator::new(ctx, preprocessors)?.generate(f)?;
+    println!("Output File: {}", outfile.display());
 
     Ok(())
 }

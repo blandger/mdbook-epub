@@ -50,7 +50,7 @@ pub(crate) fn hash_link(url: &Url) -> String {
     let ext = path
         .extension()
         .and_then(OsStr::to_str)
-        .unwrap_or_else(|| panic!("Unable to extract file ext from {url}"));
+        .unwrap_or_else(|| panic!("Unable to extract file ext from '{url}'"));
     format!("{:x}.{}", hasher.finish(), ext)
 }
 

@@ -23,7 +23,8 @@ name = "mdbook-epub"
 doc = false
 
 [dependencies]
-epub-builder = "0.5"
+eyre = "0.6"
+epub-builder = "0.7"
 #epub-builder = { path = "../epub-builder-blandger" }
 #epub-builder = { git = "https://github.com/blandger/epub-builder.git", branch = "navigation_opt_fix" }
 thiserror = "1.0"

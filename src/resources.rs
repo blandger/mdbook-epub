@@ -64,13 +64,13 @@ pub(crate) fn find(ctx: &RenderContext) -> Result<HashMap<String, Asset>, Error>
                                         String::from(relative_link_path.to_str().unwrap());
                                     if !assets.contains_key(&link_key) {
                                         debug!(
-                                            "Adding asset by link '{:?}' : {:#?}",
+                                            "Adding new, unique asset by link '{:?}' : {:#?}",
                                             link_key, &asset
                                         );
                                         assets.insert(link_key, asset);
                                         assets_count += 1;
                                     } else {
-                                        debug!("Skipped asset for '{}'", link_key);
+                                        debug!("Skipped existing asset by link '{:?}'", link_key);
                                     }
                                 }
                                 _ => {
@@ -102,6 +102,7 @@ pub(crate) fn find(ctx: &RenderContext) -> Result<HashMap<String, Asset>, Error>
         }
     }
     debug!("Added '{}' links and assets in total", assets.len());
+    trace!("Added assets: {:?}", &assets);
     Ok(assets)
 }
 
@@ -182,7 +183,7 @@ impl Asset {
             return Err(Error::AssetFile(absolute_location));
         }
         // Use filename as embedded file path with content from absolute_location.
-        let binding = utils::normalize_path(Path::new(link.clone()));
+        let binding = utils::normalize_path(Path::new(link));
         debug!("Extracting file name from = {:?}, binding = '{binding:?}'", &full_filename.display());
         let filename;
         if cfg!(target_os = "windows") {
