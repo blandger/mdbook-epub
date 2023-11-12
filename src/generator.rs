@@ -185,7 +185,15 @@ impl<'a> Generator<'a> {
             content_path
         );
         let path = content_path.with_extension("html").display().to_string();
-        let mut content = EpubContent::new(path, rendered.as_bytes()).title(format!("{chapter}"));
+        let title = if self.config.no_section_label {
+            ch.name.clone()
+        } else if let Some(ref section_number) = ch.number {
+            format!{"{} {}", section_number, ch.name}
+        } else {
+            ch.name.clone()
+        };
+
+        let mut content = EpubContent::new(path, rendered.as_bytes()).title(title);
 
         let level = chapter
             .number
