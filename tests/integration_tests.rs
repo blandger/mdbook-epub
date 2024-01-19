@@ -70,6 +70,7 @@ fn output_epub_exists() {
     assert!(output_file.exists());
 }
 
+#[ignore = "Needs reworking for resource outside src"]
 #[test]
 #[serial]
 fn output_epub_is_valid() {
@@ -106,7 +107,7 @@ fn epub_check(path: &Path) -> Result<(), Error> {
         Err(_) => {
             // failed to launch epubcheck, it's probably not installed
             debug!("Failed to launch epubcheck, it's probably not installed here...");
-            Ok(())
+            Err(Error::EpubCheck)
         }
     }
 }

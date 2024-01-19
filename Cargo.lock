@@ -1183,6 +1183,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "handlebars"
+version = "5.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c73166c591e67fb4bf9bc04011b4e35f12e89fe8d676193aa263df065955a379"
+dependencies = [
+ "log",
+ "pest",
+ "pest_derive",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1738,8 +1752,8 @@ dependencies = [
 
 [[package]]
 name = "mdbook"
-version = "0.4.35"
-source = "git+https://github.com/blandger/mdBook.git?branch=feature/links_preprocessor#8e6bfa8328d767bc4ee693c7471ae34645ca60f2"
+version = "0.4.36"
+source = "git+https://github.com/blandger/mdBook.git?branch=feature/links_preprocessor#17803ad2a9c1a2c64ba14ffde6dac530cf015c8a"
 dependencies = [
  "ammonia",
  "anyhow",
@@ -1749,7 +1763,7 @@ dependencies = [
  "elasticlunr-rs",
  "env_logger",
  "futures-util",
- "handlebars",
+ "handlebars 5.1.1",
  "ignore",
  "log",
  "memchr",
@@ -1757,6 +1771,7 @@ dependencies = [
  "notify-debouncer-mini",
  "once_cell",
  "opener",
+ "pathdiff",
  "pulldown-cmark",
  "regex",
  "serde",
@@ -1771,7 +1786,7 @@ dependencies = [
 
 [[package]]
 name = "mdbook-epub"
-version = "0.4.34"
+version = "0.4.36"
 dependencies = [
  "anyhow",
  "const_format",
@@ -1779,7 +1794,7 @@ dependencies = [
  "epub",
  "epub-builder",
  "eyre",
- "handlebars",
+ "handlebars 4.4.0",
  "html_parser",
  "log",
  "mdbook",
@@ -1948,11 +1963,12 @@ dependencies = [
 
 [[package]]
 name = "notify-debouncer-mini"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e55ee272914f4563a2f8b8553eb6811f3c0caea81c756346bad15b7e3ef969f0"
+checksum = "5d40b221972a1fc5ef4d858a2f671fb34c75983eb385463dff3780eeff6a9d43"
 dependencies = [
  "crossbeam-channel",
+ "log",
  "notify",
 ]
 
@@ -2184,6 +2200,12 @@ dependencies = [
  "smallvec",
  "windows-targets",
 ]
+
+[[package]]
+name = "pathdiff"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8835116a5c179084a830efb3adc117ab007512b535bc1a21c991d3b32a6b44dd"
 
 [[package]]
 name = "pem"
