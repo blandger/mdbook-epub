@@ -64,8 +64,8 @@ pub enum Error {
     #[error("Error reading stylesheet")]
     StylesheetRead,
 
-    #[error("Epub check failed, ensure the epubcheck program is installed")]
-    EpubCheck,
+    #[error("epubcheck has failed: {0}")]
+    EpubCheck(String),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -129,6 +129,7 @@ pub fn generate(
     }
 
     let f = File::create(&outfile)?;
+    debug!("Path to epub file: '{:?}'", f);
     Generator::new(ctx, preprocessors)?.generate(f)?;
     println!("Output File: {}", outfile.display());
 

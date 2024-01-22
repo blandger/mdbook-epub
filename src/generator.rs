@@ -172,30 +172,29 @@ impl<'a> Generator<'a> {
             }
         }
 
-        let chapter = ch;
-        let content_path = chapter.path.as_ref().ok_or_else(|| {
+        let content_path = ch.path.as_ref().ok_or_else(|| {
             Error::ContentFileNotFound(format!(
                 "Content file was not found for Chapter {}",
-                &chapter.name
+                &ch.name
             ))
         })?;
         trace!(
             "add a chapter {:?} by a path = {:?}",
-            &chapter.name,
+            &ch.name,
             content_path
         );
         let path = content_path.with_extension("html").display().to_string();
         let title = if self.config.no_section_label {
             ch.name.clone()
         } else if let Some(ref section_number) = ch.number {
-            format!{"{} {}", section_number, ch.name}
+            format!{"{} {}", section_number, &ch.name}
         } else {
             ch.name.clone()
         };
 
         let mut content = EpubContent::new(path, rendered.as_bytes()).title(title);
 
-        let level = chapter
+        let level = ch
             .number
             .as_ref()
             .map(|n| n.len() as i32 - 1)
@@ -205,7 +204,7 @@ impl<'a> Generator<'a> {
         self.builder.add_content(content)?;
 
         // second pass to actually add the sub-chapters
-        for sub_item in &chapter.sub_items {
+        for sub_item in &ch.sub_items {
             if let BookItem::Chapter(sub_ch) = &mut sub_item.clone() {
                 trace!("add sub-item = {:?}", sub_ch.name);
                 self.add_chapter(sub_ch)?;
