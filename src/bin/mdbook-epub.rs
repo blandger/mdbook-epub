@@ -1,17 +1,20 @@
-use ::env_logger;
 #[macro_use]
 extern crate log;
-use ::mdbook;
-use ::mdbook_epub;
-use ::structopt;
 
-use mdbook::renderer::RenderContext;
-use mdbook::MDBook;
+use std::io;
 use std::path::PathBuf;
-use std::{io, process};
+use std::process;
+
+use ::env_logger;
+use ::mdbook;
+use ::serde_json;
+use ::structopt;
+use mdbook::MDBook;
+use mdbook::renderer::RenderContext;
 use structopt::StructOpt;
 
-use mdbook_epub::Error;
+use ::mdbook_epub;
+use mdbook_epub::errors::Error;
 
 fn main() {
     env_logger::init();
@@ -47,8 +50,8 @@ fn run(args: &Args) -> Result<(), Error> {
         println!("Running mdbook-epub as plugin...");
         serde_json::from_reader(io::stdin()).map_err(|_| Error::RenderContext)?
     };
+    // calling the main code for epub creation
     mdbook_epub::generate(&ctx, md.clone_preprocessors())?;
-
     info!(
         "Book is READY in directory: '{}'",
         ctx.destination.display()

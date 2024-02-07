@@ -21,7 +21,7 @@ use mdbook::MDBook;
 use tempdir::TempDir;
 
 use ::mdbook_epub;
-use mdbook_epub::Error;
+use mdbook_epub::errors::Error;
 
 static INIT: Once = Once::new();
 
