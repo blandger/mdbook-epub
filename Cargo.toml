@@ -2,7 +2,7 @@
 authors = ["Michael Bryan <michaelfbryan@gmail.com>"]
 description = "An EPUB renderer for mdbook."
 name = "mdbook-epub"
-version = "0.4.36"
+version = "0.4.37"
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/Michael-F-Bryan/mdbook-epub"
@@ -38,7 +38,7 @@ structopt = "0.3.26"
 mime_guess = "2.0"
 env_logger = "0.10.0"
 log = "0.4.17"
-#mdbook = { version = "0.4.36", default-features = false }
+#mdbook = { version = "0.4.37", default-features = false }
 #mdbook = { path = "../mdBook-blandger" }
 mdbook = { git = "https://github.com/blandger/mdBook.git", branch = "feature/links_preprocessor" }
 handlebars = "4.3.7"
