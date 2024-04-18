@@ -47,7 +47,7 @@ Now everything is set up, just run `mdbook` as normal and the output directory
 
 The `mdbook-epub` executable can be run in "standalone" mode. This is where
 the backend can be used without needing to be called by `mdbook`, useful if
-you only want to render the EPUB document. Path is MD sources folder e.g /xxx/src/ (with SUMMARY.md inside)
+you only want to render the EPUB document.
 
 ```
 $ mdbook-epub -s true ./path/to/book/dir
