@@ -12,6 +12,7 @@ use std::sync::Once;
 
 use ::epub;
 use ::mdbook;
+use anyhow::Result;
 use epub::doc::EpubDoc;
 use mdbook::preprocess::{LinkPreprocessor, Preprocessor};
 use mdbook::renderer::RenderContext;
