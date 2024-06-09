@@ -1,6 +1,5 @@
  # MDBook EPUB Backend
 
- - [![Build Status](https://travis-ci.org/Michael-F-Bryan/mdbook-epub.svg?branch=master)](https://travis-ci.org/Michael-F-Bryan/mdbook-epub)
  - [![Build status](https://ci.appveyor.com/api/projects/status/94a37o6ffioapgoo/branch/master?svg=true)](https://ci.appveyor.com/project/blandger/mdbook-epub/branch/master)
  - [![Rust](https://github.com/blandger/mdbook-epub/actions/workflows/rust.yml/badge.svg)](https://github.com/blandger/mdbook-epub/actions/workflows/rust.yml)
 
@@ -50,8 +49,8 @@ the backend can be used without needing to be called by `mdbook`, useful if
 you only want to render the EPUB document. Path is MD sources folder e.g /xxx/src/ (with SUMMARY.md inside)
 
 ```
-$ mdbook-epub -s true ./path/to/book/dir
-$ mdbook-epub --standalone true ./path/to/book/dir
+$ mdbook-epub -s ./path/to/book/dir
+$ mdbook-epub --standalone ./path/to/book/dir
 ```
 
 
@@ -84,6 +83,23 @@ cover-image = "ebook-cover.png"
 additional-resources = ["./assets/Open-Sans-Regular.ttf"]
 no-section-label = true
 curly-quotes = true
+```
+
+## Logging, seeing progress
+
+In order to enable logging to the screen you need to set the `RUST_LOG` environment variable to `debug` or `info`.
+
+On Linux and macOS this can be done in the following way:
+
+```
+RUST_LOG=debug  mdbook-epub
+```
+
+On Windows CMD you need to set it on a separate line:
+
+```
+set RUST_LOG=debug
+mdbook-epub
 ```
 
 

@@ -50,7 +50,7 @@ fn run(args: &Args) -> Result<(), Error> {
         println!("Running mdbook-epub as plugin...");
         serde_json::from_reader(io::stdin()).map_err(|_| Error::RenderContext)?
     };
-    // calling the main code for epub creation
+    debug!("calling the main code for epub creation");
     mdbook_epub::generate(&ctx, md.clone_preprocessors())?;
     info!(
         "Book is READY in directory: '{}'",
@@ -65,8 +65,6 @@ struct Args {
     #[structopt(
         short = "s",
         long = "standalone",
-        parse(try_from_str), // can that cause mdbook-epub install error??
-        default_value = "true", // can that cause mdbook-epub install error??
         help = "Run standalone (i.e. not as a mdbook plugin)"
     )]
     standalone: bool,

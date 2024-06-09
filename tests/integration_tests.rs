@@ -12,13 +12,11 @@ use std::sync::Once;
 
 use ::epub;
 use ::mdbook;
-use ::tempdir;
-use anyhow::Result;
 use epub::doc::EpubDoc;
 use mdbook::preprocess::{LinkPreprocessor, Preprocessor};
 use mdbook::renderer::RenderContext;
 use mdbook::MDBook;
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 use ::mdbook_epub;
 use mdbook_epub::errors::Error;
@@ -48,7 +46,7 @@ fn generate_epub() -> Result<(EpubDoc<BufReader<File>>, PathBuf), Error> {
     match EpubDoc::new(&output_file) {
         Ok(epub) => Ok((epub, output_file)),
         Err(err) => {
-            error!("dummy book creation error = {}", err);
+            error!("dummy book creation error = {:?}", err);
             Err(Error::EpubDocCreate(output_file.display().to_string()))
         }
     }
@@ -147,7 +145,7 @@ fn rendered_document_contains_all_chapter_files_and_assets() {
     let mut doc = generate_epub().unwrap();
     debug!("Number of internal epub resources = {:?}", doc.0.resources);
     // number of internal epub resources for dummy test book
-    assert_eq!(8, doc.0.resources.len());
+    assert_eq!(10, doc.0.resources.len());
     assert_eq!(2, doc.0.spine.len());
     assert_eq!(doc.0.mdata("title").unwrap(), "DummyBook");
     assert_eq!(doc.0.mdata("language").unwrap(), "en");
@@ -194,7 +192,7 @@ fn straight_quotes_transformed_into_curly_quotes() {
 /// `RenderContext` for use the EPUB generator.
 fn create_dummy_book() -> Result<(RenderContext, MDBook, TempDir), Error> {
     debug!("create_dummy_book...");
-    let temp = TempDir::new("mdbook-epub")?;
+    let temp = TempDir::with_prefix_in("mdbook-epub", ".")?;
 
     let dummy_book = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests")

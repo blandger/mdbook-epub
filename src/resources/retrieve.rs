@@ -22,7 +22,7 @@ pub(crate) trait ContentRetriever {
                     fs::create_dir_all(cache_dir)?;
                 }
                 debug!("Downloading asset : {}", url);
-                let mut file = OpenOptions::new().create(true).write(true).open(dest)?;
+                let mut file = OpenOptions::new().create(true).truncate(true).write(true).open(dest)?;
                 let mut resp = self.retrieve(url.as_str())?;
                 io::copy(&mut resp, &mut file)?;
                 debug!("Downloaded asset by '{}'", url);
@@ -53,7 +53,7 @@ impl ContentRetriever for ResourceHandler {
 
 #[cfg(test)]
 mod tests {
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     use crate::errors::Error;
     use crate::resources::asset::Asset;
@@ -117,8 +117,30 @@ mod tests {
         panic!("{}", r.unwrap_err().to_string());
     }
 
+    #[test]
+    fn download_parametrized_avatar_image() {
+        use std::io::Read;
+
+        struct TestHandler;
+        impl ContentRetriever for TestHandler {
+            fn retrieve(&self, _url: &str) -> Result<BoxRead, Error> {
+                Ok(Box::new("Downloaded content".as_bytes()))
+            }
+        }
+        let cr = TestHandler {};
+        let a = temp_remote_asset("https://avatars.githubusercontent.com/u/274803?v=4").unwrap();
+        let r = cr.download(&a);
+        assert!(r.is_ok());
+
+        let mut buffer = String::new();
+        let mut f = std::fs::File::open(&a.location_on_disk).unwrap();
+        f.read_to_string(&mut buffer).unwrap();
+        assert_eq!(buffer, "Downloaded content");
+    }
+
     fn temp_remote_asset(url: &str) -> Result<Asset, Error> {
-        let dest_dir = TempDir::new("mdbook-epub")?;
-        Asset::from_url(url::Url::parse(url).unwrap(), dest_dir.path())
+        let tmp_dir = TempDir::new().unwrap();
+        let dest_dir = tmp_dir.path().join("mdbook-epub");
+        Asset::from_url(url::Url::parse(url).unwrap(), dest_dir.as_path())
     }
 }
