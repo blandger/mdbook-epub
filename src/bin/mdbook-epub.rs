@@ -8,10 +8,9 @@ use std::process;
 use ::env_logger;
 use ::mdbook;
 use ::serde_json;
-use ::structopt;
-use mdbook::MDBook;
+use clap::Parser;
 use mdbook::renderer::RenderContext;
-use structopt::StructOpt;
+use mdbook::MDBook;
 
 use ::mdbook_epub;
 use mdbook_epub::errors::Error;
@@ -19,7 +18,7 @@ use mdbook_epub::errors::Error;
 fn main() {
     env_logger::init();
     info!("Booting EPUB generator...");
-    let args = Args::from_args();
+    let args = Args::parse();
     debug!("prepared generator args = {:?}", args);
 
     if let Err(e) = run(&args) {
@@ -47,12 +46,12 @@ fn run(args: &Args) -> Result<(), Error> {
         debug!("EPUB book config is : {:?}", &md.config);
         RenderContext::new(md.root.clone(), md.book.clone(), md.config.clone(), destination)
     } else {
-        println!("Running mdbook-epub as plugin...");
+        println!("Running mdbook-epub as plugin waiting on the STDIN input. If you wanted to process the files in the current folder, use the -s flag from documentation, See: mdbook-epub --help");
         serde_json::from_reader(io::stdin()).map_err(|_| Error::RenderContext)?
     };
     debug!("calling the main code for epub creation");
     mdbook_epub::generate(&ctx, md.clone_preprocessors())?;
-    info!(
+    println!(
         "Book is READY in directory: '{}'",
         ctx.destination.display()
     );
@@ -60,14 +59,66 @@ fn run(args: &Args) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug, Clone, StructOpt)]
+#[derive(Debug, Clone, Parser)]
+#[clap(
+name = "MDBook epub utility",
+about = "MDBook epub utility makes EPUB file from MD source files described by book.toml",
+)]
+#[command(version, about, long_about = None)]
 struct Args {
-    #[structopt(
-        short = "s",
+    #[arg(
+        short = 's',
         long = "standalone",
         help = "Run standalone (i.e. not as a mdbook plugin)"
     )]
     standalone: bool,
-    #[structopt(help = "The book to render.", parse(from_os_str), default_value = ".")]
+
+    #[arg(
+        help = "Root folder the book to render from",
+        value_parser = clap::value_parser!(PathBuf),
+        default_value = ".",
+        name = "root"
+    )]
     root: PathBuf,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_standalone_only() {
+        let args = Args::try_parse_from(&["test", "--standalone"]).unwrap();
+        debug_assert!(args.standalone);
+        debug_assert_eq!(args.root, PathBuf::from("."));
+    }
+
+    #[test]
+    fn test_standalone_with_root_path() {
+        let args = Args::try_parse_from(&["test", "--standalone", "/some/path"]).unwrap();
+        debug_assert!(args.standalone);
+        debug_assert_eq!(args.root, PathBuf::from("/some/path"));
+    }
+
+    #[test]
+    fn test_default_root_default_short() {
+        let args = Args::try_parse_from(&["test"]).unwrap();
+        debug_assert!(!args.standalone);
+        debug_assert_eq!(args.root, PathBuf::from("."));
+    }
+
+    #[test]
+    fn test_short_flag() {
+        let args = Args::try_parse_from(&["test", "-s"]).unwrap();
+        debug_assert!(args.standalone);
+        debug_assert_eq!(args.root, PathBuf::from("."));
+    }
+
+    #[test]
+    fn test_with_root_only() {
+        let args = Args::try_parse_from(&["test", "/another/path"]).unwrap();
+        debug_assert!(!args.standalone);
+        debug_assert_eq!(args.root, PathBuf::from("/another/path"));
+    }
 }
