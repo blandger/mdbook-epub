@@ -83,17 +83,17 @@ pub fn generate(
 pub fn output_filename(dest: &Path, config: &MdConfig) -> PathBuf {
     match config.book.title {
         Some(ref title) => {
-            let out_file_name;
-            if config.book.language.is_some() && config.book.version.is_some() {
-                out_file_name = format!(
+
+            let out_file_name = if config.book.language.is_some() && config.book.version.is_some() {
+                format!(
                     "{}-{}-{}.zip",
                     title,
                     config.book.language.as_ref().unwrap(),
                     config.book.version.as_ref().unwrap()
-                );
+                )
             } else {
-                out_file_name = title.to_string();
-            }
+                title.to_string()
+            };
             debug!("Composed file name = {}", &out_file_name);
             dest.join(out_file_name).with_extension("epub")
         }

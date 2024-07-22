@@ -158,12 +158,12 @@ impl<'a> Generator<'a> {
             renderer.preprocess_chapter(&self.preprocess_ctx, ch)?;
         }
         trace!("{}", &ch.content);
-        let rendered_result = self.render_chapter(&ch);
-        let rendered: String;
+        let rendered_result = self.render_chapter(ch);
+
         // let's skip chapter without content (drafts)
-        match rendered_result {
+        let rendered: String = match rendered_result {
             Ok(rendered_content) => {
-                rendered = rendered_content;
+                rendered_content
             }
             Err(error_msg) => {
                 warn!(
@@ -172,7 +172,7 @@ impl<'a> Generator<'a> {
                 );
                 return Ok(());
             }
-        }
+        };
 
         let content_path = ch.path.as_ref().ok_or_else(|| {
             Error::ContentFileNotFound(format!(
