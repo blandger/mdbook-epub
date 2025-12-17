@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::{file_io, path_io, Error};
 use crate::resources::asset::{Asset, AssetKind};
 use infer::Infer;
 use mime_guess::Mime;
@@ -14,6 +14,7 @@ use std::{
     io::{self, Read},
     path::Path,
 };
+use tracing::debug;
 
 /// Struct to keep file (image) data 'mime type' after recognizing downloaded content
 #[allow(dead_code)]
@@ -85,7 +86,7 @@ impl Default for UpdatedAssetData {
 pub(crate) trait ContentRetriever {
     fn download(&self, asset: &Asset) -> Result<UpdatedAssetData, Error>;
     fn read(&self, path: &Path, buffer: &mut Vec<u8>) -> Result<(), Error> {
-        File::open(path)?.read_to_end(buffer)?;
+        file_io(file_io(File::open(path), "open-downloaded", path)?.read_to_end(buffer), "read-downloaded", path)?;
         Ok(())
     }
     fn retrieve(&self, url: &str) -> Result<RetrievedContent, Error>;
@@ -111,7 +112,7 @@ impl ContentRetriever for ResourceHandler {
                 });
             } else {
                 if let Some(cache_dir) = dest.parent() {
-                    fs::create_dir_all(cache_dir)?;
+                    path_io(fs::create_dir_all(cache_dir), cache_dir)?;
                 }
                 debug!("Downloading asset by: {}", url);
                 let mut retrieved_content = self.retrieve(url.as_str())?;
@@ -141,7 +142,7 @@ impl ContentRetriever for ResourceHandler {
                     .write(true)
                     .open(&new_location_on_disk)?;
                 debug!("File on disk: \n{:?}", &file);
-                io::copy(&mut retrieved_content.reader, &mut file)?;
+                file_io(io::copy(&mut retrieved_content.reader, &mut file), "copy-download", &new_location_on_disk)?;
                 debug!(
                     "Downloaded asset by '{}' : {:?}",
                     url, &new_location_on_disk
@@ -210,6 +211,7 @@ mod tests {
     use mime_guess::Mime;
     use std::path::PathBuf;
     use tempfile::TempDir;
+    use tracing::trace;
     use url::Url;
 
     use super::{ContentRetriever, ResourceHandler, RetrievedContent, UpdatedAssetData};

@@ -1,21 +1,15 @@
 //! A `mdbook` backend for generating a book in the `EPUB` format.
 
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
-
 use std::fs::{File, create_dir_all};
 use std::path::{Path, PathBuf};
 
-use ::mdbook;
+use ::mdbook_core;
 use ::semver;
 use ::thiserror::Error;
-use mdbook::config::Config as MdConfig;
-use mdbook::renderer::RenderContext;
+use mdbook_core::config::Config as MdConfig;
+use mdbook_renderer::RenderContext;
 use semver::{Version, VersionReq};
+use tracing::{debug, info};
 
 use errors::Error;
 
@@ -30,12 +24,15 @@ mod generator;
 mod resources;
 mod utils;
 mod validation;
+pub mod init_trace;
+// Reexport function
+pub use init_trace::init_tracing;
 
 /// The default stylesheet used to make the rendered document pretty.
 pub const DEFAULT_CSS: &str = include_str!("master.css");
 
 /// The exact version of `mdbook` this crate is compiled against.
-pub const MDBOOK_VERSION: &str = mdbook::MDBOOK_VERSION;
+pub const MDBOOK_VERSION: &str = mdbook_core::MDBOOK_VERSION;
 
 /// Check that the version of `mdbook` we're called by is compatible with this
 /// backend.
@@ -90,4 +87,27 @@ pub fn output_filename(dest: &Path, config: &MdConfig) -> Result<PathBuf, Error>
         }
         None => Ok(dest.join("book.epub")),
     }
+}
+
+// IO helper functions to make Errors more clear on debug
+pub fn file_io<T>(
+    result: std::io::Result<T>,
+    action: &str,
+    path: impl Into<PathBuf>,
+) -> Result<T, Error> {
+    result.map_err(|e| Error::AssetFileIo {
+        action: action.to_string(),
+        path: path.into(),
+        source: e,
+    })
+}
+
+pub fn path_io<T>(
+    result: std::io::Result<T>,
+    path: impl Into<PathBuf>,
+) -> Result<T, Error> {
+    result.map_err(|e| Error::AssetPathIo {
+        path: path.into(),
+        source: e,
+    })
 }

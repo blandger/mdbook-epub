@@ -1,14 +1,14 @@
-use crate::common::init_logging::init_logging;
+use crate::common::init_trace::init_tracing;
 use epub::doc::EpubDoc;
-use log::{debug, error};
-use mdbook::MDBook;
-use mdbook::renderer::RenderContext;
+use mdbook_driver::MDBook;
 use mdbook_epub::errors::Error;
+use mdbook_renderer::RenderContext;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::TempDir;
+use tracing::{debug, error};
 
 /// Convenience function for compiling the dummy book into an `EpubDoc`.
 #[allow(dead_code)]
@@ -102,7 +102,6 @@ pub fn create_dummy_book_preserve_temp_folder(
 }
 
 pub fn epub_check(path: &Path) -> Result<(), Error> {
-    init_logging();
     debug!("check epub book by path = '{}'...", &path.display());
 
     // windows workaround
@@ -149,7 +148,6 @@ pub fn epub_check(path: &Path) -> Result<(), Error> {
 }
 
 pub fn output_epub_is_valid(epub_book_name: &str) {
-    init_logging();
     debug!("output_epub_is_valid...");
     let (ctx, _md, temp) = create_dummy_book(epub_book_name).unwrap();
     mdbook_epub::generate(&ctx).unwrap();
@@ -167,7 +165,7 @@ pub fn output_epub_is_valid(epub_book_name: &str) {
 
 #[allow(dead_code)]
 pub fn output_epub_is_valid_preserve_temp_folder(epub_book_name: &str) {
-    init_logging();
+    init_tracing();
     debug!("output_epub_is_valid...");
     let (ctx, _md, temp) = create_dummy_book_preserve_temp_folder(epub_book_name).unwrap();
     mdbook_epub::generate(&ctx).unwrap();

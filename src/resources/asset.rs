@@ -9,6 +9,7 @@ use mime_guess::Mime;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
+use tracing::{debug, trace};
 use url::Url;
 
 /// The type of asset, remote or local
@@ -16,6 +17,9 @@ use url::Url;
 pub(crate) enum AssetKind {
     Remote(Url),
     Local(PathBuf),
+    // image embedded into MD
+    #[allow(dead_code)]
+    Embedded,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -195,6 +199,7 @@ impl Display for AssetKind {
         match self {
             AssetKind::Remote(url) => write!(f, "Remote: '{}'", url.as_str()),
             AssetKind::Local(path) => write!(f, "Local '{}'", path.display()),
+            AssetKind::Embedded => write!(f, "Embedded"),
         }
     }
 }
